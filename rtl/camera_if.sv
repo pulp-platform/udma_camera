@@ -121,6 +121,7 @@ module camera_if
     logic  [15:0] s_cfg_frameslice_urx;
     logic  [15:0] s_cfg_frameslice_ury;
     logic         s_sof;
+    logic         s_eof;
     logic         s_framevalid;
     logic         s_tx_valid;
     logic         s_data_rx_ready;
@@ -154,7 +155,8 @@ module camera_if
     assign s_cfg_g_coeff        = s_cfg_filter[15:8];
     assign s_cfg_b_coeff        = s_cfg_filter[7:0];
 
-    assign s_sof = ~r_vsync & cam_vsync_i;
+    assign s_sof = ~r_vsync &  cam_vsync_i;
+    assign s_eof =  r_vsync & ~cam_vsync_i;
 
     assign s_framevalid = (r_framecounter == 0);
 
@@ -209,7 +211,7 @@ module camera_if
   assign s_cam_clk_dft = cam_clk_i;
 `endif
 
-    assign s_data_rx_ready = (s_cfg_en==1'b0) ? 1'b1 : data_rx_ready_i;
+    assign s_data_rx_ready     = (s_cfg_en==1'b0) ? 1'b1 : data_rx_ready_i;
     assign udma_tx_valid_flush = (s_cfg_en==1'b0) ? 1'b0 : udma_tx_valid;
 
     udma_dc_fifo #(16,BUFFER_WIDTH) u_dc_fifo
