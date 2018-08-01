@@ -1,23 +1,3 @@
-// Copyright 2018 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// Description: Parallel camera interface with uDMA plug
-//
-///////////////////////////////////////////////////////////////////////////////
-//
-// Authors    : Antonio Pullini (pullinia@iis.ee.ethz.ch)
-//
-///////////////////////////////////////////////////////////////////////////////
-
 `define RGB565        3'b000
 `define RGB555        3'b001
 `define RGB444        3'b010
@@ -49,7 +29,6 @@ module camera_if
         output logic     [TRANS_SIZE-1:0] cfg_rx_size_o,
         output logic                      cfg_rx_continuous_o,
         output logic                      cfg_rx_en_o,
-        output logic                      cfg_rx_filter_o,
         output logic                      cfg_rx_clr_o,
         input  logic                      cfg_rx_en_i,
         input  logic                      cfg_rx_pending_i,
@@ -86,6 +65,7 @@ module camera_if
 
     logic [15:0] udma_tx_data;
     logic        udma_tx_valid;
+    logic        udma_tx_valid_flush;
     logic        udma_tx_ready;
 
     logic [15:0] s_cfg_rowlen;
@@ -143,6 +123,7 @@ module camera_if
     logic         s_sof;
     logic         s_framevalid;
     logic         s_tx_valid;
+    logic         s_data_rx_ready;
 
 
 
@@ -198,7 +179,6 @@ module camera_if
         .cfg_rx_datasize_o  ( data_rx_datasize_o  ),
         .cfg_rx_continuous_o( cfg_rx_continuous_o ),
         .cfg_rx_en_o        ( cfg_rx_en_o         ),
-        .cfg_rx_filter_o    ( cfg_rx_filter_o     ),
         .cfg_rx_clr_o       ( cfg_rx_clr_o        ),
         .cfg_rx_en_i        ( cfg_rx_en_i         ),
         .cfg_rx_pending_i   ( cfg_rx_pending_i    ),
@@ -229,17 +209,20 @@ module camera_if
   assign s_cam_clk_dft = cam_clk_i;
 `endif
 
+    assign s_data_rx_ready = (s_cfg_en==1'b0) ? 1'b1 : data_rx_ready_i;
+    assign udma_tx_valid_flush = (s_cfg_en==1'b0) ? 1'b0 : udma_tx_valid;
+
     udma_dc_fifo #(16,BUFFER_WIDTH) u_dc_fifo
     (
         .dst_clk_i          ( clk_i           ),
         .dst_rstn_i         ( rstn_i          ), //this is not sync with the clock but the external clock is down during system reset
         .dst_data_o         ( data_rx_data_o  ),
         .dst_valid_o        ( data_rx_valid_o ),
-        .dst_ready_i        ( data_rx_ready_i ),
-        .src_clk_i          ( s_cam_clk_dft       ),
+        .dst_ready_i        ( s_data_rx_ready ),
+        .src_clk_i          ( s_cam_clk_dft   ),
         .src_rstn_i         ( rstn_i          ),
         .src_data_i         ( udma_tx_data    ),
-        .src_valid_i        ( udma_tx_valid   ),
+        .src_valid_i        ( udma_tx_valid_flush   ),
         .src_ready_o        ( udma_tx_ready   )
     );
 
@@ -409,8 +392,15 @@ module camera_if
             if(s_sof)
             begin
                 r_rowcounter <= 'h0;
+                r_colcounter <=  'h0;
                 r_enable     <= r_en_sync[1]; //enable the IP only when SOF
             end
+            else if (~s_sof & ~r_en_sync[1])
+            begin
+                r_rowcounter <= 'h0;
+                r_colcounter <= 'h0;
+                r_enable     <= r_en_sync[1]; //disable the IP when not SOF
+              end
             else if(cam_hsync_i & r_enable)
             begin
                 if(r_sample_msb)
