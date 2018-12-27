@@ -47,10 +47,6 @@ module camera_if
         input  logic                      cam_vsync_i
     );
 
-    logic [BUFFER_WIDTH-1:0] s_writetoken;
-    logic [BUFFER_WIDTH-1:0] s_readpointer;
-    logic [15:0]             s_data_async;
-
     logic [15:0] r_rowcounter;
     logic [15:0] r_colcounter;
 
