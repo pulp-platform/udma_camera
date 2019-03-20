@@ -136,7 +136,7 @@ module camera_reg_if #(
                     r_rx_size        <= cfg_data_i[TRANS_SIZE-1:0];
                 `REG_RX_CFG:
                 begin
-                    r_rx_clr          = cfg_data_i[5];
+                    r_rx_clr          = cfg_data_i[6];
                     r_rx_en           = cfg_data_i[4];
                     r_rx_filter      <= cfg_data_i[3];
                     r_rx_datasize    <= cfg_data_i[2:1];
