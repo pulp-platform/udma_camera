@@ -54,7 +54,6 @@ module camera_reg_if #(
     output logic                [1:0] cfg_rx_datasize_o,
     output logic                      cfg_rx_continuous_o,
     output logic                      cfg_rx_en_o,
-    output logic                      cfg_rx_filter_o,
     output logic                      cfg_rx_clr_o,
     input  logic                      cfg_rx_en_i,
     input  logic                      cfg_rx_pending_i,
@@ -74,7 +73,6 @@ module camera_reg_if #(
     logic              [1 : 0] r_rx_datasize;
     logic                      r_rx_continuous;
     logic                      r_rx_en;
-    logic                      r_rx_filter;
     logic                      r_rx_clr;
 
     logic [31:0]               r_cam_cfg;
@@ -94,7 +92,6 @@ module camera_reg_if #(
     assign cfg_rx_datasize_o   = r_rx_datasize;
     assign cfg_rx_continuous_o = r_rx_continuous;
     assign cfg_rx_en_o         = r_rx_en;
-    assign cfg_rx_filter_o     = r_rx_filter;
     assign cfg_rx_clr_o        = r_rx_clr;
 
     assign cfg_cam_cfg_o        = r_cam_cfg;
@@ -112,7 +109,6 @@ module camera_reg_if #(
             r_rx_startaddr   <=  'h0;
             r_rx_size        <=  'h0;
             r_rx_continuous  <=  'h0;
-            r_rx_filter      <=  'h0;
             r_rx_en           =  'h0;
             r_rx_clr          =  'h0;
             r_rx_datasize    <=  'b0;
@@ -138,7 +134,6 @@ module camera_reg_if #(
                 begin
                     r_rx_clr          = cfg_data_i[6];
                     r_rx_en           = cfg_data_i[4];
-                    r_rx_filter      <= cfg_data_i[3];
                     r_rx_datasize    <= cfg_data_i[2:1];
                     r_rx_continuous  <= cfg_data_i[0];
                 end
@@ -166,7 +161,7 @@ module camera_reg_if #(
         `REG_RX_SIZE:
             cfg_data_o[TRANS_SIZE-1:0] = cfg_rx_bytes_left_i;
         `REG_RX_CFG:
-            cfg_data_o = {26'h0,cfg_rx_pending_i,cfg_rx_en_i,r_rx_filter,r_rx_datasize,r_rx_continuous};
+            cfg_data_o = {26'h0,cfg_rx_pending_i,cfg_rx_en_i, 1'b0,r_rx_datasize,r_rx_continuous};
         `REG_CAM_CFG_GLOB:
             cfg_data_o = {cfg_cam_ip_en_i,r_cam_cfg[30:0]};
         `REG_CAM_CFG_LL:
