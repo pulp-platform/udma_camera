@@ -4,7 +4,7 @@
 `define BYPASS_LITEND 3'b100
 `define BYPASS_BIGEND 3'b101
 
-module camera_if 
+module camera_if
    #(
         parameter L2_AWIDTH_NOAL = 12,
         parameter TRANS_SIZE     = 16,
@@ -24,7 +24,7 @@ module camera_if
         input  logic                      cfg_rwn_i,
         output logic               [31:0] cfg_data_o,
         output logic                      cfg_ready_o,
-    
+
         output logic [L2_AWIDTH_NOAL-1:0] cfg_rx_startaddr_o,
         output logic     [TRANS_SIZE-1:0] cfg_rx_size_o,
         output logic                      cfg_rx_continuous_o,
@@ -39,7 +39,7 @@ module camera_if
         output logic               [15:0] data_rx_data_o,
         output logic                      data_rx_valid_o,
         input  logic                      data_rx_ready_i,
-    
+
         input  logic                      cam_clk_i,
         input  logic     [DATA_WIDTH-1:0] cam_data_i,
         input  logic                      cam_hsync_i,
@@ -75,8 +75,8 @@ module camera_if
     logic   [7:0] s_b_pix;
     logic   [15:0] s_yuv_pix;
     logic   [15:0] r_yuv_pix;
-    logic 	  r_yuv_data_valid;
-  
+    logic   r_yuv_data_valid;
+
     logic   [7:0] r_r_pix;
     logic   [7:0] r_g_pix;
     logic   [7:0] r_b_pix;
@@ -92,7 +92,8 @@ module camera_if
 
     logic        r_tx_valid;
 
-    //logic  [1:0] r_en_sync_soc;
+    logic        s_cam_vsync;
+    logic        s_cam_vsync_polarity;
 
     logic [31:0] s_cfg_glob;
     logic [31:0] s_cfg_ll;
@@ -109,7 +110,6 @@ module camera_if
 
     logic        s_cam_clk_dft;
 
-    //assign en_o = r_en_sync_soc[1];
 
     logic         s_cfg_en;
     logic  [15:0] s_cfg_frameslice_llx;
@@ -117,7 +117,6 @@ module camera_if
     logic  [15:0] s_cfg_frameslice_urx;
     logic  [15:0] s_cfg_frameslice_ury;
     logic         s_sof;
-    logic         s_eof;
     logic         s_framevalid;
     logic         s_tx_valid;
     logic         s_data_rx_ready;
@@ -151,8 +150,8 @@ module camera_if
     assign s_cfg_g_coeff        = s_cfg_filter[15:8];
     assign s_cfg_b_coeff        = s_cfg_filter[7:0];
 
-    assign s_sof = ~r_vsync &  cam_vsync_i;
-    assign s_eof =  r_vsync & ~cam_vsync_i;
+    assign s_cam_vsync = s_cam_vsync_polarity ? ~cam_vsync_i : cam_vsync_i;
+    assign s_sof = ~r_vsync &  s_cam_vsync;
 
     assign s_framevalid = (r_framecounter == 0);
 
@@ -184,6 +183,7 @@ module camera_if
         .cfg_rx_bytes_left_i( cfg_rx_bytes_left_i ),
 
         .cfg_cam_ip_en_i     ( 1'b0 ),
+        .cfg_cam_vsync_polarity_o ( s_cam_vsync_polarity   ),
         .cfg_cam_cfg_o       ( s_cfg_glob   ),
         .cfg_cam_cfg_ll_o    ( s_cfg_ll     ),
         .cfg_cam_cfg_ur_o    ( s_cfg_ur     ),
@@ -252,7 +252,7 @@ module camera_if
                 s_yuv_pix = {r_data_msb[7:0], cam_data_i[7:0]};
             `BYPASS_BIGEND:
                 s_yuv_pix = {cam_data_i[7:0], r_data_msb[7:0]};
-        endcase // r_format    
+        endcase // r_format
     end
 
     always_comb begin : proc_sfilter_shift
@@ -279,7 +279,7 @@ module camera_if
                 s_data_filter_shift={8'h0,r_data_filter[16:9]};
             default:
                 s_data_filter_shift=r_data_filter[15:0];
-        endcase // s_cfg_format    
+        endcase // s_cfg_format
     end
 
     always_ff @(posedge s_cam_clk_dft or negedge rstn_i) begin : proc_pix
@@ -301,7 +301,7 @@ module camera_if
                     r_g_pix <= s_g_pix;
                     r_b_pix <= s_b_pix;
                     r_tx_valid <= 1'b1;
-               end 
+               end
                else begin
                    r_yuv_pix <= s_yuv_pix;
                    r_yuv_data_valid <= 1'b1;
@@ -356,7 +356,7 @@ module camera_if
             r_vsync     <= 0;
         end else begin
             if(r_en_sync[1])
-                r_vsync     <= cam_vsync_i;
+                r_vsync     <= s_cam_vsync;
         end
     end
 
@@ -435,14 +435,5 @@ module camera_if
             end
         end
     end
-
-    //always_ff @(posedge clk_i or negedge rstn_i) begin : proc_r_en_sync
-    //    if(~rstn_i) begin
-    //        r_en_sync_soc <= 0;
-    //    end else begin
-    //        r_en_sync_soc <= {r_en_sync_soc[0],r_enable};
-    //    end
-    //end
-
 
 endmodule // camera_if

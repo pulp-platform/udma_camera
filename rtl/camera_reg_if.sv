@@ -18,10 +18,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-`define REG_RX_SADDR     5'b00000 //BASEADDR+0x00 
+`define REG_RX_SADDR     5'b00000 //BASEADDR+0x00
 `define REG_RX_SIZE      5'b00001 //BASEADDR+0x04
-`define REG_RX_CFG       5'b00010 //BASEADDR+0x08  
-`define REG_RX_INTCFG    5'b00011 //BASEADDR+0x0C  
+`define REG_RX_CFG       5'b00010 //BASEADDR+0x08
+`define REG_RX_INTCFG    5'b00011 //BASEADDR+0x0C
 
 `define REG_TX_SADDR     5'b00100 //BASEADDR+0x10
 `define REG_TX_SIZE      5'b00101 //BASEADDR+0x14
@@ -34,20 +34,21 @@
 `define REG_CAM_CFG_SIZE    5'b01011 //BASEADDR+0x2C
 
 `define REG_CAM_CFG_FILTER  5'b01100 //BASEADDR+0x30
+`define REG_CAM_VSYNC_POLARITY  5'b01101 //BASEADDR+0x34
 
 module camera_reg_if #(
     parameter L2_AWIDTH_NOAL = 12,
     parameter TRANS_SIZE     = 16
 ) (
-	input  logic 	                  clk_i,
-	input  logic   	                  rstn_i,
+    input  logic                      clk_i,
+    input  logic                      rstn_i,
 
-	input  logic               [31:0] cfg_data_i,
-	input  logic                [4:0] cfg_addr_i,
-	input  logic                      cfg_valid_i,
-	input  logic                      cfg_rwn_i,
+    input  logic               [31:0] cfg_data_i,
+    input  logic                [4:0] cfg_addr_i,
+    input  logic                      cfg_valid_i,
+    input  logic                      cfg_rwn_i,
     output logic               [31:0] cfg_data_o,
-	output logic                      cfg_ready_o,
+    output logic                      cfg_ready_o,
 
     output logic [L2_AWIDTH_NOAL-1:0] cfg_rx_startaddr_o,
     output logic     [TRANS_SIZE-1:0] cfg_rx_size_o,
@@ -61,6 +62,7 @@ module camera_reg_if #(
     input  logic     [TRANS_SIZE-1:0] cfg_rx_bytes_left_i,
 
     input  logic                      cfg_cam_ip_en_i,
+    output logic                      cfg_cam_vsync_polarity_o,
     output logic             [31 : 0] cfg_cam_cfg_o,
     output logic             [31 : 0] cfg_cam_cfg_ll_o,
     output logic             [31 : 0] cfg_cam_cfg_ur_o,
@@ -80,6 +82,7 @@ module camera_reg_if #(
     logic [31:0]               r_cam_cfg_ur;
     logic [31:0]               r_cam_cfg_size;
     logic [31:0]               r_cam_cfg_filter;
+    logic                      r_cam_vsync_polarity;
 
     logic                [4:0] s_wr_addr;
     logic                [4:0] s_rd_addr;
@@ -99,11 +102,12 @@ module camera_reg_if #(
     assign cfg_cam_cfg_ur_o     = r_cam_cfg_ur;
     assign cfg_cam_cfg_size_o   = r_cam_cfg_size;
     assign cfg_cam_cfg_filter_o = r_cam_cfg_filter;
+    assign cfg_cam_vsync_polarity_o = r_cam_vsync_polarity;
 
 
-    always_ff @(posedge clk_i, negedge rstn_i) 
+    always_ff @(posedge clk_i, negedge rstn_i)
     begin
-        if(~rstn_i) 
+        if(~rstn_i)
         begin
             // SPI REGS
             r_rx_startaddr   <=  'h0;
@@ -117,6 +121,8 @@ module camera_reg_if #(
             r_cam_cfg_ur     <=  'h0;
             r_cam_cfg_size   <=  'h0;
             r_cam_cfg_filter <=  'h0;
+
+            r_cam_vsync_polarity <=  1'b0;
         end
         else
         begin
@@ -147,6 +153,8 @@ module camera_reg_if #(
                     r_cam_cfg_size          <=  cfg_data_i;
                 `REG_CAM_CFG_FILTER:
                     r_cam_cfg_filter        <=  cfg_data_i;
+                `REG_CAM_VSYNC_POLARITY:
+                    r_cam_vsync_polarity    <=  cfg_data_i[0];
                 endcase
             end
         end
@@ -172,6 +180,8 @@ module camera_reg_if #(
             cfg_data_o = r_cam_cfg_size;
         `REG_CAM_CFG_FILTER:
             cfg_data_o = r_cam_cfg_filter;
+        `REG_CAM_VSYNC_POLARITY:
+            cfg_data_o = {31'h0, r_cam_vsync_polarity};
         default:
             cfg_data_o = 'h0;
         endcase
@@ -180,4 +190,4 @@ module camera_reg_if #(
     assign cfg_ready_o  = 1'b1;
 
 
-endmodule 
+endmodule
