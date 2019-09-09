@@ -3,4 +3,17 @@ udma_camera:
     rtl/camera_reg_if.sv,
     rtl/camera_if.sv,
   ]
-
+  jg_slint_top_name: [
+    camera_if
+  ]
+  jg_slint_elab_opt: [
+  ]
+  jg_slint_postelab_cmds: [
+  ]
+  jg_slint_clocks: [
+    clk_i,
+    cam_clk_i,
+  ]
+  jg_slint_resets: [
+    ~rstn_i,
+  ]
