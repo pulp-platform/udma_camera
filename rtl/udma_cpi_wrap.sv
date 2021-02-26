@@ -1,5 +1,6 @@
  module udma_cpi_wrap
     import udma_pkg::udma_evt_t;
+    import pulp_io_pkg::pad_to_cpi_t;
 (
     input  logic         sys_clk_i,
     input  logic         periph_clk_i,
@@ -20,17 +21,7 @@
     UDMA_LIN_CH.rx_out   rx_ch[0:0],
 
     // PAD SIGNALS CONNECTION
-	BIPAD_IF.PERIPH_SIDE PAD_PCLK,
-    BIPAD_IF.PERIPH_SIDE PAD_VSYNCH,
-    BIPAD_IF.PERIPH_SIDE PAD_HSYNCH,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA0,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA1,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA2,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA3,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA4,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA5,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA6,
-    BIPAD_IF.PERIPH_SIDE PAD_DATA7
+    input  pad_to_cpi_t pad_to_cpi
 
 );
 
@@ -68,45 +59,20 @@ camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDT
     .data_rx_valid_o    ( rx_ch[0].valid      ),
     .data_rx_ready_i    ( rx_ch[0].ready      ),
 
-    .cam_clk_i          ( PAD_PCLK.IN         ),
+    .cam_clk_i          ( pad_to_cpi.pclk_i   ),
     .cam_data_i         ( data_s              ),
-    .cam_hsync_i        ( PAD_HSYNCH.IN       ),
-    .cam_vsync_i        ( PAD_VSYNCH.IN       )
+    .cam_hsync_i        ( pad_to_cpi.hsync_i  ),
+    .cam_vsync_i        ( pad_to_cpi.vsync_i  )
 );
 
-assign PAD_DATA0.IN  = data_s[0];
-assign PAD_DATA0.OUT = 1'b0;
-assign PAD_DATA0.OE  = 1'b0;
-assign PAD_DATA1.IN  = data_s[1];
-assign PAD_DATA1.OUT = 1'b0;
-assign PAD_DATA1.OE  = 1'b0;
-assign PAD_DATA2.IN  = data_s[2];
-assign PAD_DATA2.OUT = 1'b0;
-assign PAD_DATA2.OE  = 1'b0;
-assign PAD_DATA3.IN  = data_s[3];
-assign PAD_DATA3.OUT = 1'b0;
-assign PAD_DATA3.OE  = 1'b0;
-assign PAD_DATA4.IN  = data_s[4];
-assign PAD_DATA4.OUT = 1'b0;
-assign PAD_DATA4.OE  = 1'b0;
-assign PAD_DATA5.IN  = data_s[5];
-assign PAD_DATA5.OUT = 1'b0;
-assign PAD_DATA5.OE  = 1'b0;
-assign PAD_DATA6.IN  = data_s[6];
-assign PAD_DATA6.OUT = 1'b0;
-assign PAD_DATA6.OE  = 1'b0;
-assign PAD_DATA7.IN  = data_s[7];
-assign PAD_DATA7.OUT = 1'b0;
-assign PAD_DATA7.OE  = 1'b0;  
-
-assign PAD_PCLK.OUT  = 1'b0;
-assign PAD_PCLK.OE   = 1'b0;
-
-assign PAD_VSYNCH.OUT = 1'b0;
-assign PAD_VSYNCH.OE  = 1'b0;
-
-assign PAD_HSYNCH.OUT = 1'b0;  
-assign PAD_HSYNCH.OE  = 1'b0;  
+assign pad_to_cpi.data0_i = data_s[0];
+assign pad_to_cpi.data1_i = data_s[1];
+assign pad_to_cpi.data2_i = data_s[2];
+assign pad_to_cpi.data3_i = data_s[3];
+assign pad_to_cpi.data4_i = data_s[4];
+assign pad_to_cpi.data5_i = data_s[5];
+assign pad_to_cpi.data6_i = data_s[6];
+assign pad_to_cpi.data7_i = data_s[7];
 
 assign events_o[0]   = ch_events_i[0];
 assign events_o[3:1] = 0;
