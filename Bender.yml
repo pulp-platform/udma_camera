@@ -12,6 +12,7 @@ dependencies:
   udma_core: { git: "https://github.com/pulp-platform/udma_core.git", version: 1.0.2 }
 
 sources:
+  - rtl/cpi_pkg.sv
   - rtl/camera_reg_if.sv
   - rtl/camera_if.sv
   - rtl/udma_cpi_wrap.sv
