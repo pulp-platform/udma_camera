@@ -1,6 +1,6 @@
  module udma_cpi_wrap
     import udma_pkg::udma_evt_t;
-    import pulp_io_pkg::pad_to_cpi_t;
+    import cpi_pkg::pad_to_cpi_t;
 (
     input  logic         sys_clk_i,
     input  logic         periph_clk_i,
