@@ -13,7 +13,6 @@
 	output logic         cfg_ready_o,
     output logic  [31:0] cfg_data_o,
 
-    input  udma_evt_t    ch_events_i,
     output udma_evt_t    events_o,
     input  udma_evt_t    events_i,
 
@@ -74,10 +73,16 @@ assign pad_to_cpi.data5_i = data_s[5];
 assign pad_to_cpi.data6_i = data_s[6];
 assign pad_to_cpi.data7_i = data_s[7];
 
-assign events_o[0]   = ch_events_i[0];
-assign events_o[3:1] = 0;
+assign events_o[0]   = rx_ch[0].events;
+assign events_o[1]   = 1'b0;
+assign events_o[2]   = 1'b0;
+assign events_o[3]   = 1'b0;
 
-assign rx_ch[0].data[31:16] = 0;
+// assigning unused signals
+assign rx_ch[0].data[31:16] = '0;
+assign rx_ch[0].stream      = '0;
+assign rx_ch[0].stream_id   = '0;
+assign rx_ch[0].destination = '0;
 
 endmodule : udma_cpi_wrap
 
