@@ -5,46 +5,48 @@
 `define BYPASS_BIGEND 3'b101
 
 module camera_if
-   #(
-        parameter L2_AWIDTH_NOAL = 12,
-        parameter TRANS_SIZE     = 16,
-        parameter DATA_WIDTH     = 12,
-        parameter BUFFER_WIDTH   = 8
-    )
-    (
-        input logic                       clk_i,
-        input logic                       rstn_i,
+   import udma_pkg::*;
+#(
+    parameter L2_AWIDTH_NOAL = 12,
+    parameter TRANS_SIZE     = 16,
+    parameter DATA_WIDTH     = 12,
+    parameter BUFFER_WIDTH   = 8
+)
+(
+    input logic                       clk_i,
+    input logic                       rstn_i,
 
-        input  logic                       dft_test_mode_i,
-        input  logic                       dft_cg_enable_i,
+    input  logic                       dft_test_mode_i,
+    input  logic                       dft_cg_enable_i,
 
-        input  logic               [31:0] cfg_data_i,
-        input  logic                [4:0] cfg_addr_i,
-        input  logic                      cfg_valid_i,
-        input  logic                      cfg_rwn_i,
-        output logic               [31:0] cfg_data_o,
-        output logic                      cfg_ready_o,
+    input  logic               [31:0] cfg_data_i,
+    input  logic                [4:0] cfg_addr_i,
+    input  logic                      cfg_valid_i,
+    input  logic                      cfg_rwn_i,
+    output logic               [31:0] cfg_data_o,
+    output logic                      cfg_ready_o,
 
-        output logic [L2_AWIDTH_NOAL-1:0] cfg_rx_startaddr_o,
-        output logic     [TRANS_SIZE-1:0] cfg_rx_size_o,
-        output logic                      cfg_rx_continuous_o,
-        output logic                      cfg_rx_en_o,
-        output logic                      cfg_rx_clr_o,
-        input  logic                      cfg_rx_en_i,
-        input  logic                      cfg_rx_pending_i,
-        input  logic [L2_AWIDTH_NOAL-1:0] cfg_rx_curr_addr_i,
-        input  logic     [TRANS_SIZE-1:0] cfg_rx_bytes_left_i,
+    output logic [L2_AWIDTH_NOAL-1:0] cfg_rx_startaddr_o,
+    output logic     [TRANS_SIZE-1:0] cfg_rx_size_o,
+    output logic                      cfg_rx_continuous_o,
+    output logic                      cfg_rx_en_o,
+    output logic                      cfg_rx_clr_o,
+    input  logic                      cfg_rx_en_i,
+    input  logic                      cfg_rx_pending_i,
+    input  logic [L2_AWIDTH_NOAL-1:0] cfg_rx_curr_addr_i,
+    input  logic     [TRANS_SIZE-1:0] cfg_rx_bytes_left_i,
+    output ch_dest_t                  cfg_rx_dest_o,
 
-        output logic                [1:0] data_rx_datasize_o,
-        output logic               [15:0] data_rx_data_o,
-        output logic                      data_rx_valid_o,
-        input  logic                      data_rx_ready_i,
+    output logic                [1:0] data_rx_datasize_o,
+    output logic               [15:0] data_rx_data_o,
+    output logic                      data_rx_valid_o,
+    input  logic                      data_rx_ready_i,
 
-        input  logic                      cam_clk_i,
-        input  logic     [DATA_WIDTH-1:0] cam_data_i,
-        input  logic                      cam_hsync_i,
-        input  logic                      cam_vsync_i
-    );
+    input  logic                      cam_clk_i,
+    input  logic     [DATA_WIDTH-1:0] cam_data_i,
+    input  logic                      cam_hsync_i,
+    input  logic                      cam_vsync_i
+);
 
     logic [15:0] r_rowcounter;
     logic [15:0] r_colcounter;
@@ -181,6 +183,7 @@ module camera_if
         .cfg_rx_pending_i   ( cfg_rx_pending_i    ),
         .cfg_rx_curr_addr_i ( cfg_rx_curr_addr_i  ),
         .cfg_rx_bytes_left_i( cfg_rx_bytes_left_i ),
+        .cfg_rx_dest_o      ( cfg_rx_dest_o       ),
 
         .cfg_cam_ip_en_i     ( 1'b0 ),
         .cfg_cam_vsync_polarity_o ( s_cam_vsync_polarity   ),

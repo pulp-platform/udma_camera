@@ -52,6 +52,7 @@ camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDT
     .cfg_rx_pending_i   ( rx_ch[0].pending    ),
     .cfg_rx_curr_addr_i ( rx_ch[0].curr_addr  ),
     .cfg_rx_bytes_left_i( rx_ch[0].bytes_left ),
+    .cfg_rx_dest_o      ( rx_ch[0].destination),
 
     .data_rx_datasize_o ( rx_ch[0].datasize   ),
     .data_rx_data_o     ( rx_ch[0].data[15:0] ),
@@ -82,7 +83,7 @@ assign events_o[3]   = 1'b0;
 assign rx_ch[0].data[31:16] = '0;
 assign rx_ch[0].stream      = '0;
 assign rx_ch[0].stream_id   = '0;
-assign rx_ch[0].destination = '0;
+//assign rx_ch[0].destination = '0;
 
 endmodule : udma_cpi_wrap
 
