@@ -65,14 +65,14 @@ camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDT
     .cam_vsync_i        ( pad_to_cpi.vsync_i  )
 );
 
-assign pad_to_cpi.data0_i = data_s[0];
-assign pad_to_cpi.data1_i = data_s[1];
-assign pad_to_cpi.data2_i = data_s[2];
-assign pad_to_cpi.data3_i = data_s[3];
-assign pad_to_cpi.data4_i = data_s[4];
-assign pad_to_cpi.data5_i = data_s[5];
-assign pad_to_cpi.data6_i = data_s[6];
-assign pad_to_cpi.data7_i = data_s[7];
+assign data_s[0] = pad_to_cpi.data0_i;
+assign data_s[1] = pad_to_cpi.data1_i;
+assign data_s[2] = pad_to_cpi.data2_i;
+assign data_s[3] = pad_to_cpi.data3_i;
+assign data_s[4] = pad_to_cpi.data4_i;
+assign data_s[5] = pad_to_cpi.data5_i;
+assign data_s[6] = pad_to_cpi.data6_i;
+assign data_s[7] = pad_to_cpi.data7_i;
 
 assign events_o[0]   = rx_ch[0].events;
 assign events_o[1]   = 1'b0;
