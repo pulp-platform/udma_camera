@@ -121,8 +121,8 @@ module camera_reg_if
             r_rx_startaddr   <=  'h0;
             r_rx_size        <=  'h0;
             r_rx_continuous  <=  'h0;
-            r_rx_en          <=  'h0;
-            r_rx_clr         <=  'h0;
+            r_rx_en           =  'h0;
+            r_rx_clr          =  'h0;
             r_rx_datasize    <=  'b0;
             r_rx_dest        <=  'h0;
             r_cam_cfg        <=  'h0;
@@ -135,8 +135,8 @@ module camera_reg_if
         end
         else
         begin
-            r_rx_en        <=  'h0;
-            r_rx_clr       <=  'h0;
+            r_rx_en         =  'h0;
+            r_rx_clr        =  'h0;
 
             if (cfg_valid_i & ~cfg_rwn_i)
             begin
@@ -147,8 +147,8 @@ module camera_reg_if
                     r_rx_size        <= cfg_data_i[TRANS_SIZE-1:0];
                 `REG_RX_CFG:
                 begin
-                    r_rx_clr         <= cfg_data_i[6];
-                    r_rx_en          <= cfg_data_i[4];
+                    r_rx_clr          = cfg_data_i[6];
+                    r_rx_en           = cfg_data_i[4];
                     r_rx_datasize    <= cfg_data_i[2:1];
                     r_rx_continuous  <= cfg_data_i[0];
                 end
