@@ -12,5 +12,7 @@ package cpi_pkg;
 		logic data5_i;
 		logic data6_i;
 		logic data7_i;
+		logic data8_i;
+		logic data9_i;
 	}pad_to_cpi_t;
 endpackage

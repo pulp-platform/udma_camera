@@ -9,7 +9,7 @@ package:
 
 dependencies:
   tech_cells_generic: { git: "https://github.com/pulp-platform/tech_cells_generic.git", version: 0.2.3 }
-  udma_core: { git: "https://github.com/pulp-platform/udma_core.git", version: 1.0.2 }
+  udma_core: { git: "https://github.com/pulp-platform/udma_core.git", version: 2.0.0 }
 
 sources:
   - rtl/cpi_pkg.sv
