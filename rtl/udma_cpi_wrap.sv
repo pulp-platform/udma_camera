@@ -27,14 +27,17 @@
 import udma_pkg::TRANS_SIZE;  
 import udma_pkg::L2_AWIDTH_NOAL; 
 
-logic [7:0] data_s;
+logic [9:0] data_s;
+logic frame_evt_s;
 
-camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDTH(8), .BUFFER_WIDTH(8)) i_camera_if (
+camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDTH(10), .BUFFER_WIDTH(8)) i_camera_if (
     .clk_i              ( periph_clk_i        ),
     .rstn_i             ( rstn_i              ),
 
     .dft_test_mode_i    ( dft_test_mode_i     ),
     .dft_cg_enable_i    ( dft_cg_enable_i     ),
+
+    .frame_evt_o        ( frame_evt_s         ),
 
     .cfg_data_i         ( cfg_data_i          ),
     .cfg_addr_i         ( cfg_addr_i          ),
@@ -55,7 +58,7 @@ camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDT
     .cfg_rx_dest_o      ( rx_ch[0].destination),
 
     .data_rx_datasize_o ( rx_ch[0].datasize   ),
-    .data_rx_data_o     ( rx_ch[0].data[15:0] ),
+    .data_rx_data_o     ( rx_ch[0].data       ),
     .data_rx_valid_o    ( rx_ch[0].valid      ),
     .data_rx_ready_i    ( rx_ch[0].ready      ),
 
@@ -73,14 +76,15 @@ assign data_s[4] = pad_to_cpi.data4_i;
 assign data_s[5] = pad_to_cpi.data5_i;
 assign data_s[6] = pad_to_cpi.data6_i;
 assign data_s[7] = pad_to_cpi.data7_i;
+assign data_s[8] = pad_to_cpi.data8_i;
+assign data_s[9] = pad_to_cpi.data9_i;
 
 assign events_o[0]   = rx_ch[0].events;
-assign events_o[1]   = 1'b0;
+assign events_o[1]   = frame_evt_s;
 assign events_o[2]   = 1'b0;
 assign events_o[3]   = 1'b0;
 
 // assigning unused signals
-assign rx_ch[0].data[31:16] = '0;
 assign rx_ch[0].stream      = '0;
 assign rx_ch[0].stream_id   = '0;
 //assign rx_ch[0].destination = '0;

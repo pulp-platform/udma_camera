@@ -3,6 +3,7 @@
 `define RGB444        3'b010
 `define BYPASS_LITEND 3'b100
 `define BYPASS_BIGEND 3'b101
+`define BYPASS_10BITS 3'b110
 
 module camera_if
    import udma_pkg::*;
@@ -16,8 +17,8 @@ module camera_if
     input logic                       clk_i,
     input logic                       rstn_i,
 
-    input  logic                       dft_test_mode_i,
-    input  logic                       dft_cg_enable_i,
+    input  logic                      dft_test_mode_i,
+    input  logic                      dft_cg_enable_i,
 
     input  logic               [31:0] cfg_data_i,
     input  logic                [4:0] cfg_addr_i,
@@ -37,8 +38,10 @@ module camera_if
     input  logic     [TRANS_SIZE-1:0] cfg_rx_bytes_left_i,
     output ch_dest_t                  cfg_rx_dest_o,
 
+    output logic                      frame_evt_o,
+
     output logic                [1:0] data_rx_datasize_o,
-    output logic               [15:0] data_rx_data_o,
+    output logic               [31:0] data_rx_data_o,
     output logic                      data_rx_valid_o,
     input  logic                      data_rx_ready_i,
 
@@ -54,14 +57,14 @@ module camera_if
     logic  [5:0] r_framecounter;
 
     logic        r_sample_msb;
-    logic  [7:0] r_data_msb;    // First received byte
+    logic  [DATA_WIDTH-1:0] r_data_msb;    // First received byte
 
     logic        s_pixel_valid;
     logic        r_vsync;
     logic        r_enable;
     logic [1:0]  r_en_sync;
 
-    logic [15:0] udma_tx_data;
+    logic [31:0] udma_tx_data;
     logic        udma_tx_valid;
     logic        udma_tx_valid_flush;
     logic        udma_tx_ready;
@@ -78,6 +81,9 @@ module camera_if
     logic   [15:0] s_yuv_pix;
     logic   [15:0] r_yuv_pix;
     logic   r_yuv_data_valid;
+
+    logic   [31:0] s_byp32_pix;
+    logic   [31:0] r_byp32_pix;
 
     logic   [7:0] r_r_pix;
     logic   [7:0] r_g_pix;
@@ -124,10 +130,6 @@ module camera_if
     logic         s_data_rx_ready;
 
 
-
-
-
-
     assign s_r_filt = r_r_pix * s_cfg_r_coeff;
     assign s_g_filt = r_g_pix * s_cfg_g_coeff;
     assign s_b_filt = r_b_pix * s_cfg_b_coeff;
@@ -158,6 +160,10 @@ module camera_if
     assign s_framevalid = (r_framecounter == 0);
 
     assign s_tx_valid = cam_hsync_i & s_pixel_valid & ~r_sample_msb;
+
+    initial begin
+        assert ((DATA_WIDTH == 8) || (DATA_WIDTH == 10)) else $fatal(1,$sformatf("[CPI] DATA_WIDTH = %0d is not supported",DATA_WIDTH));
+    end
 
     camera_reg_if #(
         .L2_AWIDTH_NOAL(L2_AWIDTH_NOAL),
@@ -213,13 +219,14 @@ module camera_if
     assign s_data_rx_ready     = (s_cfg_en==1'b0) ? 1'b1 : data_rx_ready_i;
     assign udma_tx_valid_flush = (s_cfg_en==1'b0) ? 1'b0 : udma_tx_valid;
 
-    udma_dc_fifo #(16,BUFFER_WIDTH) u_dc_fifo
+    udma_dc_fifo #(32,BUFFER_WIDTH) u_dc_fifo
     (
         .dst_clk_i          ( clk_i           ),
         .dst_rstn_i         ( rstn_i          ), //this is not sync with the clock but the external clock is down during system reset
         .dst_data_o         ( data_rx_data_o  ),
         .dst_valid_o        ( data_rx_valid_o ),
         .dst_ready_i        ( s_data_rx_ready ),
+        
         .src_clk_i          ( s_cam_clk_dft   ),
         .src_rstn_i         ( rstn_i          ),
         .src_data_i         ( udma_tx_data    ),
@@ -255,6 +262,8 @@ module camera_if
                 s_yuv_pix = {r_data_msb[7:0], cam_data_i[7:0]};
             `BYPASS_BIGEND:
                 s_yuv_pix = {cam_data_i[7:0], r_data_msb[7:0]};
+            `BYPASS_10BITS:
+                s_byp32_pix = {6'b000000,r_data_msb[9:0],6'b000000,cam_data_i[9:0]};
         endcase // r_format
     end
 
@@ -306,8 +315,12 @@ module camera_if
                     r_tx_valid <= 1'b1;
                end
                else begin
-                   r_yuv_pix <= s_yuv_pix;
-                   r_yuv_data_valid <= 1'b1;
+                    if (s_cfg_format == `BYPASS_10BITS) begin
+                        r_byp32_pix <= s_byp32_pix;
+                    end else begin
+                       r_yuv_pix <= s_yuv_pix;
+                    end
+                    r_yuv_data_valid <= 1'b1;
                end
             end
             else begin
@@ -325,8 +338,13 @@ module camera_if
 
             if(r_data_filter_valid || r_yuv_data_valid)
             begin
-                udma_tx_data  <= r_data_filter_valid ? s_data_filter_shift: r_yuv_pix;
-                udma_tx_valid <= 1'b1;
+                if (s_cfg_format == `BYPASS_10BITS) begin
+                    udma_tx_data  <= r_data_filter_valid ? {16'h0000,s_data_filter_shift}: r_byp32_pix;
+                    udma_tx_valid <= 1'b1;
+                end else begin
+                    udma_tx_data  <= r_data_filter_valid ? {16'h0000,s_data_filter_shift}: r_yuv_pix;
+                    udma_tx_valid <= 1'b1;
+                end
             end
             else
                 udma_tx_valid <= 1'b0;
@@ -438,5 +456,8 @@ module camera_if
             end
         end
     end
+
+
+    edge_detect i_edge_detect (.clk_i(clk_i), .rst_ni(rstn_i), .d_i(cam_vsync_i), .re_o(), .fe_o(frame_evt_o));
 
 endmodule // camera_if
