@@ -14,7 +14,7 @@ Bender is used to fetch the required dependencies.
 
 To run a basic simulation follow these steps:
 
-1. checkout all the dependencies with the `make checkout` command
+1. checkout all the dependencies with the `make checkout scripts` command and create the compile scripts
 2. build the RTL with `make clean build`
 3. optimize it, `make opt`
 4. run the simulation with `make sim`
