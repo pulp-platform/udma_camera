@@ -1,19 +1,17 @@
-
-
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 
 `define PERIOD 500
 
 `define DATA_WIDTH 10
-`define LINE_PIXELS 64
-`define FRAME_LINES 32
+`define LINE_PIXELS 166
+`define FRAME_LINES 128
 
 `define CFG_REGS 4
 
 `define TRANSACTIONS 25
 
-// `define VERBOSE 
+//`define VERBOSE
 
 class camera_item extends uvm_sequence_item;
 
@@ -85,10 +83,10 @@ class driver extends uvm_driver #(camera_item);
 
 	virtual task run_phase(uvm_phase phase);
 		super.run_phase(phase);
-		`uvm_info("DRV","Driver run...",UVM_LOW)
+		//`uvm_info("DRV","Driver run...",UVM_LOW)
 		forever begin
 			camera_item m_item;
-			`uvm_info("DRV", $sformatf("Wait for item from sequencer"),UVM_LOW)
+			//`uvm_info("DRV", $sformatf("Wait for item from sequencer"),UVM_LOW)
 			seq_item_port.get_next_item(m_item);
 			drive_item(m_item);
 			seq_item_port.item_done();
@@ -151,15 +149,13 @@ class driver extends uvm_driver #(camera_item);
 		for (int i = 0; i < `CFG_REGS; i++) begin
 			write_cfg_reg(m_item.cfg_regs[i]);
 		end
-		// `uvm_info("DRV", $sformatf("Sending a new frame"), UVM_LOW)
 		#1us;
 		// drive the pixel
-		clock_cycles(5);
+		clock_cycles(2);
 		vif.pad2cpi.vsync_i <= 1;
 		clock_cycles(1);
 		for (int y = 0; y < `FRAME_LINES; y++) begin
 			vif.pad2cpi.hsync_i <= 1;
-			//clock_cycles(1);
 			for (int x = 0; x < `LINE_PIXELS; x++) begin
 				send_pixel(m_item.pdata[y][x]);
 			end
@@ -183,7 +179,7 @@ class monitor extends uvm_monitor;
 
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
-		`uvm_info("MON","Monitor build",UVM_LOW)
+		//`uvm_info("MON","Monitor build",UVM_LOW)
 		if (!uvm_config_db#(virtual reg_if)::get(this, "", "reg_vif",vif)) begin
 			`uvm_fatal("MON","Could not get vif")
 		end
@@ -194,16 +190,14 @@ class monitor extends uvm_monitor;
 	task sniff_camera_item_input(ref camera_item item);
 		int line_pixels = 0;
 		int frame_lines = 0;
-		`uvm_info("SNF","Sniff camera input",UVM_LOW)
+		// `uvm_info("SNF","Sniff camera input",UVM_LOW)
 		while (frame_lines < `FRAME_LINES) begin
 			@(posedge vif.pad2cpi.pclk_i);
-			//`uvm_info("SNF",$sformatf("tx line %0d",frame_lines),UVM_LOW)
 			if (vif.pad2cpi.vsync_i) begin
 				line_pixels = 0;
 				while (line_pixels < `LINE_PIXELS) begin
 					@(negedge vif.pad2cpi.pclk_i);
 					if (vif.pad2cpi.hsync_i) begin
-						// `uvm_info("SNF",$sformatf("tx pixel %0d",frame_lines),UVM_LOW)
 						item.pdata[frame_lines][line_pixels][0] = vif.pad2cpi.data0_i;
 						item.pdata[frame_lines][line_pixels][1] = vif.pad2cpi.data1_i;
 						item.pdata[frame_lines][line_pixels][2] = vif.pad2cpi.data2_i;
@@ -225,12 +219,11 @@ class monitor extends uvm_monitor;
 	task collect_camera_item_output(ref camera_item item);
 		int pixel_p = 0;
 		int line_p = 0;
-		`uvm_info("CLL","Collect peripheral output",UVM_LOW)
+		// `uvm_info("CLL","Collect peripheral output",UVM_LOW)
 		vif.ready_o <= 1'b1;
 		while(line_p < `FRAME_LINES) begin
 			pixel_p = 0;
 			while(pixel_p < `LINE_PIXELS) begin
-				//`uvm_info("CLL",$sformatf("data (%0d,%0d), value %0x",line_p,pixel_p, vif.data_i),UVM_LOW)
 				if (vif.valid_i && vif.ready_o) begin
 					item.vmemspace[line_p][pixel_p+1] = vif.data_i[15:0];
 					item.vmemspace[line_p][pixel_p] = vif.data_i[31:16];
@@ -240,41 +233,17 @@ class monitor extends uvm_monitor;
 			end
 			line_p++;
 		end
-		//while (data_ptr < (`FRAME_LINES)*(`LINE_PIXELS)) begin
-		//	@(posedge vif.clk_i);
-		//	vif.ready_o = 1'b1;
-		//	if (vif.valid_i && vif.ready_o) begin
-		//		//`uvm_info("CLL",$sformatf("data %0d, value %0x",data_ptr, vif.data_i),UVM_LOW)
-		//		item.vmemspace[(data_ptr+1)/`FRAME_LINES][(data_ptr+1)%`LINE_PIXELS] = vif.data_i[15:0];
-		//		item.vmemspace[data_ptr/`FRAME_LINES][data_ptr%`LINE_PIXELS] = vif.data_i[31:16];
-		//		data_ptr = data_ptr+2;
-		//	end
-		//end
-		//vif.ready_o = 1'b0;
-	endtask
-
-	virtual task join_results(ref camera_item item, ref camera_item item_shadow, ref camera_item itemo);
-		itemo.pdata = item.pdata;
-		itemo.cfg_regs = item.cfg_regs;
-		itemo.vmemspace = item_shadow.vmemspace;
 	endtask
 
 	virtual task run_phase(uvm_phase phase);
 		super.run_phase(phase);
-
-		`uvm_info("MON","Monitor run...",UVM_LOW)
+		// `uvm_info("MON","Monitor run...",UVM_LOW)
 		forever begin
-
-			// camera_item item = new;
-			// camera_item item_shadow = new;
 			camera_item item_res = new;
-
 			fork
 				sniff_camera_item_input(item_res);
 				collect_camera_item_output(item_res);
 			join
-			// join_results(item,item_shadow,item_res);
-
 			`uvm_info(get_type_name(),$sformatf("Monitor found packet %s",item_res.convert2str()),UVM_LOW)
 			mon_analysis_port.write(item_res);
 		end
@@ -323,10 +292,9 @@ class scoreboard extends uvm_scoreboard;
 
 	virtual function write(camera_item item);
 		int errors = 0;
-		`uvm_info("SCBD","Scoreboard write",UVM_LOW)
+		//`uvm_info("SCBD","Scoreboard write",UVM_LOW)
 		for (int i = 0; i < `FRAME_LINES; i++) begin
 			for (int j = 0; j < `LINE_PIXELS; j++) begin
-				//`uvm_info(get_type_name(),$sformatf("p = %0x, m = %0x",item.pdata[i][j],item.vmemspace[i][j]),UVM_LOW);
 				if (item.pdata[i][j] != item.vmemspace[i][j]) begin
 					`uvm_error(get_type_name(),$sformatf("Error @ pixel (%0d,%0d): p = %0x, m = %0x",i,j,item.pdata[i][j],item.vmemspace[i][j]));
 					errors++;
@@ -371,18 +339,12 @@ class gen_item_seq extends uvm_sequence;
 		super.new(name);
 	endfunction
 
-	rand int num;
-
-	//constraint c1 {
-	//	soft num inside {[2:5]};
-	//}
 	virtual task body();
 		for (int i = 0; i < `TRANSACTIONS; i++) begin
 			camera_item m_item = camera_item::type_id::create("m_item");
 			start_item(m_item);
 			m_item.randomize();
-			`uvm_info("SEQ",$sformatf("Generate new item: "),UVM_LOW);
-			// m_item.print();
+			//`uvm_info("SEQ",$sformatf("Generate new item: "),UVM_LOW);
 			finish_item(m_item);
 		end
 	endtask : body
@@ -411,7 +373,7 @@ class test extends uvm_test;
 		gen_item_seq seq = gen_item_seq::type_id::create("seq");
 		phase.raise_objection(this);
 		apply_reset();
-		seq.randomize() with {num inside {[20:30]}; };
+		seq.randomize();
 		seq.start(e0.a0.s0);
 		#20us;
 		phase.drop_objection(this);
