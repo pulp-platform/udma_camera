@@ -9,7 +9,7 @@ import uvm_pkg::*;
 
 `define CFG_REGS 4
 
-`define TRANSACTIONS 25
+`define TRANSACTIONS 4
 
 //`define VERBOSE
 
@@ -154,13 +154,16 @@ class driver extends uvm_driver #(camera_item);
 		clock_cycles(2);
 		vif.pad2cpi.vsync_i <= 1;
 		clock_cycles(1);
+		vif.pad2cpi.vsync_i <= 0;
+		clock_cycles(1);
 		for (int y = 0; y < `FRAME_LINES; y++) begin
+			clock_cycles(4);
 			vif.pad2cpi.hsync_i <= 1;
 			for (int x = 0; x < `LINE_PIXELS; x++) begin
 				send_pixel(m_item.pdata[y][x]);
 			end
+			//#(`PERIOD/2);
 			vif.pad2cpi.hsync_i <= 0;
-			#(`PERIOD);
 		end
 		vif.pad2cpi.vsync_i <= 0;
 		clock_cycles(10);
@@ -191,12 +194,14 @@ class monitor extends uvm_monitor;
 		int line_pixels = 0;
 		int frame_lines = 0;
 		// `uvm_info("SNF","Sniff camera input",UVM_LOW)
+		@(posedge vif.pad2cpi.vsync_i);
 		while (frame_lines < `FRAME_LINES) begin
+
 			@(posedge vif.pad2cpi.pclk_i);
-			if (vif.pad2cpi.vsync_i) begin
+			// if (vif.pad2cpi.vsync_i) begin
 				line_pixels = 0;
 				while (line_pixels < `LINE_PIXELS) begin
-					@(negedge vif.pad2cpi.pclk_i);
+					@(posedge vif.pad2cpi.pclk_i);
 					if (vif.pad2cpi.hsync_i) begin
 						item.pdata[frame_lines][line_pixels][0] = vif.pad2cpi.data0_i;
 						item.pdata[frame_lines][line_pixels][1] = vif.pad2cpi.data1_i;
@@ -212,7 +217,7 @@ class monitor extends uvm_monitor;
 					end
 				end
 				frame_lines = frame_lines + 1;
-			end
+			// end
 		end
 	endtask
 

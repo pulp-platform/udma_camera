@@ -49,7 +49,7 @@ opt:
 	cd sim && $(VOPT) +acc=npr -o vopt_tb $(TB) -work work
 
 sim:
-	cd sim && $(VSIM) -c -64 vopt_tb \
+	cd sim && $(VSIM) -64 vopt_tb \
 	-suppress vsim-3009 -suppress vsim-8683 -suppress vsim-13288\
 	+UVM_NO_RELNOTES -stats -t ps \
 	$(VSIM_FLAGS) -do "do wave.do; run -a"
