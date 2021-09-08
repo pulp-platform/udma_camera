@@ -256,6 +256,7 @@ module camera_if
         s_g_pix = 'h0;
         s_b_pix = 'h0;
         s_yuv_pix = 'h0;
+        s_byp32_pix = '0;
         case(s_cfg_format)
             `RGB565:
             begin
@@ -281,6 +282,7 @@ module camera_if
                 s_yuv_pix = {cam_data_i[7:0], r_data_msb[7:0]};
             `BYPASS_10BITS:
                 s_byp32_pix = {6'b000000,r_data_msb[9:0],6'b000000,cam_data_i[9:0]};
+            default: s_yuv_pix = {r_data_msb[7:0], cam_data_i[7:0]};
         endcase // r_format
     end
 
