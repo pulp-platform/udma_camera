@@ -19,25 +19,28 @@ module udma_cpi_wrap
     import udma_pkg::udma_evt_t;
     import cpi_pkg::pad_to_cpi_t;
 (
-    input  logic         sys_clk_i,
-    input  logic         periph_clk_i,
-	input  logic         rstn_i,
+    input logic         sys_clk_i,
+    input logic         periph_clk_i,
+	  input logic         rstn_i,
+    input logic         dft_test_mode_i,
+    input logic         dft_cg_enable_i,
 
-	input  logic  [31:0] cfg_data_i,
-	input  logic   [4:0] cfg_addr_i,
-	input  logic         cfg_valid_i,
-	input  logic         cfg_rwn_i,
-	output logic         cfg_ready_o,
-    output logic  [31:0] cfg_data_o,
 
-    output udma_evt_t    events_o,
-    input  udma_evt_t    events_i,
+	  input logic [31:0]  cfg_data_i,
+	  input logic [4:0]   cfg_addr_i,
+	  input logic         cfg_valid_i,
+	  input logic         cfg_rwn_i,
+	  output logic        cfg_ready_o,
+    output logic [31:0] cfg_data_o,
+
+    output udma_evt_t   events_o,
+    input  udma_evt_t   events_i,
 
     // UDMA CHANNEL CONNECTION
-    UDMA_LIN_CH.rx_out   rx_ch[0:0],
+    UDMA_LIN_CH.rx_out  rx_ch[0:0],
 
     // PAD SIGNALS CONNECTION
-    input  pad_to_cpi_t pad_to_cpi
+    input pad_to_cpi_t  pad_to_cpi
 
 );
 
