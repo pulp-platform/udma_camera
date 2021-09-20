@@ -48,7 +48,7 @@ logic [9:0] data_s;
 logic frame_evt_s;
 
 camera_if #(.L2_AWIDTH_NOAL(L2_AWIDTH_NOAL), .TRANS_SIZE(TRANS_SIZE), .DATA_WIDTH(10), .BUFFER_WIDTH(8)) i_camera_if (
-    .clk_i              ( periph_clk_i        ),
+    .clk_i              ( sys_clk_i           ),
     .rstn_i             ( rstn_i              ),
 
     .dft_test_mode_i    ( dft_test_mode_i     ),
