@@ -173,6 +173,7 @@ module camera_if
 
     assign s_cam_vsync = s_cam_vsync_polarity ? ~cam_vsync_i : cam_vsync_i;
     assign s_sof = ~r_vsync &  s_cam_vsync;
+    assign s_eof = r_vsync & ~s_cam_vsync;
 
     assign s_framevalid = (r_framecounter == 0);
 
@@ -477,6 +478,6 @@ module camera_if
     end
 
 
-    edge_detect i_edge_detect (.clk_i(clk_i), .rst_ni(rstn_i), .d_i(cam_vsync_i), .re_o(), .fe_o(frame_evt_o));
+    edge_detect i_edge_detect (.clk_i(clk_i), .rst_ni(rstn_i), .d_i(s_cam_vsync), .re_o(), .fe_o(frame_evt_o));
 
 endmodule // camera_if
