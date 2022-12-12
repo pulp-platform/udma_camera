@@ -35,8 +35,11 @@
 
 `define REG_CAM_CFG_FILTER  5'b01100 //BASEADDR+0x30
 `define REG_CAM_VSYNC_POLARITY  5'b01101 //BASEADDR+0x34
+`define REG_DST          5'b01110 //BASEADDR+0x38
 
-module camera_reg_if #(
+module camera_reg_if 
+    import udma_pkg::*;
+#(
     parameter L2_AWIDTH_NOAL = 12,
     parameter TRANS_SIZE     = 16
 ) (
@@ -60,6 +63,7 @@ module camera_reg_if #(
     input  logic                      cfg_rx_pending_i,
     input  logic [L2_AWIDTH_NOAL-1:0] cfg_rx_curr_addr_i,
     input  logic     [TRANS_SIZE-1:0] cfg_rx_bytes_left_i,
+    output ch_dest_t                  cfg_rx_dest_o,
 
     input  logic                      cfg_cam_ip_en_i,
     output logic                      cfg_cam_vsync_polarity_o,
@@ -87,6 +91,8 @@ module camera_reg_if #(
     logic                [4:0] s_wr_addr;
     logic                [4:0] s_rd_addr;
 
+    ch_dest_t                  r_rx_dest;
+
     assign s_wr_addr = (cfg_valid_i & ~cfg_rwn_i) ? cfg_addr_i : 5'h0;
     assign s_rd_addr = (cfg_valid_i &  cfg_rwn_i) ? cfg_addr_i : 5'h0;
 
@@ -104,6 +110,8 @@ module camera_reg_if #(
     assign cfg_cam_cfg_filter_o = r_cam_cfg_filter;
     assign cfg_cam_vsync_polarity_o = r_cam_vsync_polarity;
 
+    assign cfg_rx_dest_o   = r_rx_dest;
+
 
     always_ff @(posedge clk_i, negedge rstn_i)
     begin
@@ -116,6 +124,7 @@ module camera_reg_if #(
             r_rx_en           =  'h0;
             r_rx_clr          =  'h0;
             r_rx_datasize    <=  'b0;
+            r_rx_dest        <=  'h0;
             r_cam_cfg        <=  'h0;
             r_cam_cfg_ll     <=  'h0;
             r_cam_cfg_ur     <=  'h0;
@@ -155,6 +164,10 @@ module camera_reg_if #(
                     r_cam_cfg_filter        <=  cfg_data_i;
                 `REG_CAM_VSYNC_POLARITY:
                     r_cam_vsync_polarity    <=  cfg_data_i[0];
+                `REG_DST:
+                begin
+                    r_rx_dest         <= cfg_data_i[DEST_SIZE-1:0];
+                end
                 endcase
             end
         end
@@ -182,6 +195,8 @@ module camera_reg_if #(
             cfg_data_o = r_cam_cfg_filter;
         `REG_CAM_VSYNC_POLARITY:
             cfg_data_o = {31'h0, r_cam_vsync_polarity};
+        `REG_DST:
+            cfg_data_o = 32'h00000000 | r_rx_dest;
         default:
             cfg_data_o = 'h0;
         endcase
